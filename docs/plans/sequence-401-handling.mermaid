@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant Comp as 任意组件
+    participant Hook as React Query Hook
+    participant AC as ApiClient
+    participant AS as AuthStore
+    participant API as Hono API
+    participant Router as Next.js Router
+
+    Comp->>Hook: 触发 API 调用
+    Hook->>AC: get/post/put/delete(path, ...)
+    AC->>AS: getToken()
+    AS-->>AC: "eyJhbGci..." (JWT)
+    AC->>API: 请求 + Authorization: Bearer eyJhbGci...
+    
+    alt Token 有效
+        API-->>AC: 200 + 数据
+        AC-->>Hook: 成功响应
+    else Token 过期/无效
+        API-->>AC: 401 Unauthorized
+        AC->>AC: handle401()
+        AC->>AS: clearAuth()
+        AS-->>AC: 已清除
+        AC->>Router: router.push("/login")
+        AC-->>Hook: 抛出 AuthenticationError
+    end

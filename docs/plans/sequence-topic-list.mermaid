@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant User as 用户
+    participant TP as Topics页面
+    participant TL as TopicList
+    participant TF as TopicFilter
+    participant UT as useTopics
+    participant AC as ApiClient
+    participant API as Hono API
+
+    User->>TP: 访问 /topics?page=1&sort=newest&type=article
+    TP->>TL: 渲染话题列表
+    TL->>UT: useTopicList({page:1, sort:"newest", type:"article"})
+    UT->>AC: get("/topics?page=1&sort=newest&type=article")
+    AC->>API: GET /api/topics?page=1&sort=newest&type=article
+    API-->>AC: {data: [...], total: 42, page: 1, limit: 20, totalPages: 3}
+    AC-->>UT: PaginatedResponse<Topic>
+    UT-->>TL: 渲染话题卡片列表
+
+    User->>TF: 切换排序为 "popular"
+    TF->>TP: 更新 URL searchParams
+    TP->>TL: 重新渲染（URL 变化触发重新请求）
+    TL->>UT: useTopicList({page:1, sort:"popular"})
+    UT->>AC: get("/topics?page=1&sort=popular")
+    AC->>API: GET /api/topics?page=1&sort=popular
+    API-->>AC: 新数据
+    AC-->>UT: 新 PaginatedResponse
+    UT-->>TL: 更新列表

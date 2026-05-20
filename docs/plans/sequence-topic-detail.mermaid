@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant User as 用户
+    participant DP as 话题详情页
+    participant TD as TopicDetail
+    participant CL as CommentList
+    participant AL as AmendmentList
+    participant UT as useTopics
+    participant UC as useComments
+    participant UA as useAmendments
+    participant AC as ApiClient
+    participant API as Hono API
+
+    User->>DP: 访问 /topics/:id
+    DP->>UT: useTopicDetail(id)
+    UT->>AC: get("/topics/:id")
+    AC->>API: GET /api/topics/:id
+    API-->>AC: {topic}
+    AC-->>UT: Topic 对象
+    UT-->>DP: 渲染话题内容
+
+    DP->>CL: 渲染评论区
+    CL->>UC: useCommentList(topicId)
+    UC->>AC: get("/comments?topicId=:id")
+    AC->>API: GET /api/comments?topicId=:id
+    API-->>AC: {data: [...], total: N}
+    AC-->>UC: Comment[]
+    UC-->>CL: 渲染评论列表
+
+    DP->>AL: 渲染修正案区
+    AL->>UA: useAmendmentList("topic", topicId)
+    UA->>AC: get("/topics/:id/amendments")
+    AC->>API: GET /api/topics/:topicId/amendments
+    API-->>AC: {data: [...]}
+    AC-->>UA: Amendment[]
+    UA-->>AL: 渲染修正案列表
+
+    User->>AL: 点击"提交修正案"
+    AL->>UA: useCreateAmendment()
+    Note over AL,UA: 弹出 AmendmentEditor
+    UA->>AC: post("/topics/:id/amendments", body)
+    AC->>API: POST /api/topics/:topicId/amendments
+    API-->>AC: {amendment}
+    AC-->>UA: 成功
+    UA-->>AL: 刷新修正案列表

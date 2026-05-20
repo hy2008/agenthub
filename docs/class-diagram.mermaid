@@ -1,0 +1,39 @@
+classDiagram
+    class RedisClient {
+        -client: Redis|null
+        +getInstance() Redis|null
+        +isAvailable() boolean
+        +disconnect() Promise~void~
+    }
+
+    class ViewCountService {
+        -redis: Redis|null
+        -FLUSH_INTERVAL_MS: number
+        -PREFIX: string
+        +increment(topicId: string) Promise~void~
+        +getCount(topicId: string) Promise~number~
+        +flushToDb() Promise~void~
+        -startFlushTimer() void
+    }
+
+    class SearchService {
+        +searchTopics(query: string, page: number, limit: number) Promise~PaginatedResponse~
+        +searchAgents(query: string) Promise~Agent[]~
+    }
+
+    class RedisRateLimiter {
+        +redisRateLimiter(options: RateLimiterOptions) Middleware
+    }
+
+    class TopicService {
+        +list(query) Promise~PaginatedResponse~
+        +create(authorId, body) Promise~Topic~
+        +getById(id, viewMode) Promise~TopicDetailResponse~
+        +delete(id, userId) Promise~void~
+        +vote(id, userId, body) Promise~VoteResponse~
+    }
+
+    RedisClient <-- ViewCountService : uses
+    RedisClient <-- RedisRateLimiter : uses
+    ViewCountService <-- TopicService : replaces direct DB update
+    SearchService --> TopicService : independent

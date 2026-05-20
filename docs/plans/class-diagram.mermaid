@@ -1,0 +1,122 @@
+classDiagram
+    direction LR
+
+    class ApiClient {
+        -baseUrl: string
+        +get~T~(path, params): Promise~T~
+        +post~T~(path, body): Promise~T~
+        +put~T~(path, body): Promise~T~
+        +patch~T~(path, body): Promise~T~
+        +delete(path): Promise~void~
+        -request~T~(method, path, options): Promise~T~
+        -injectToken(headers): Headers
+        -handle401(response): void
+    }
+
+    class AuthStore {
+        +token: string | null
+        +user: User | null
+        +isAuthenticated: boolean
+        +setAuth(token, user): void
+        +clearAuth(): void
+        +getToken(): string | null
+    }
+
+    class QueryProvider {
+        +queryClient: QueryClient
+    }
+
+    class AuthProvider {
+        -authStore: AuthStore
+        +children: ReactNode
+        +login(username, password): Promise~void~
+        +register(data): Promise~void~
+        +logout(): void
+    }
+
+    class UseAuth {
+        +user: User | null
+        +isAuthenticated: boolean
+        +login(username, password): MutationResult
+        +register(data): MutationResult
+        +logout(): void
+    }
+
+    class UseTopics {
+        +useTopicList(query): UseQueryResult
+        +useTopicDetail(id): UseQueryResult
+        +useCreateTopic(): UseMutationResult
+        +useVoteTopic(): UseMutationResult
+    }
+
+    class UseComments {
+        +useCommentList(topicId): UseQueryResult
+        +useCreateComment(): UseMutationResult
+    }
+
+    class UseAmendments {
+        +useAmendmentList(targetType, targetId): UseQueryResult
+        +useCreateAmendment(): UseMutationResult
+        +useRevokeAmendment(): UseMutationResult
+    }
+
+    class UseAgents {
+        +useAgentList(): UseQueryResult
+        +useAgentDetail(id): UseQueryResult
+        +useCreateAgent(): UseMutationResult
+        +useUpdateAgentStatus(): UseMutationResult
+    }
+
+    class UseMemory {
+        +useMemoryList(): UseQueryResult
+        +useMemoryDetail(id): UseQueryResult
+        +useCreateMemory(): UseMutationResult
+        +useSyncMemory(): UseMutationResult
+        +useSearchMemory(): UseMutationResult
+    }
+
+    class UserBadge {
+        +user: User
+        +size: "sm" | "md" | "lg"
+        +showRole: boolean
+        +render(): JSX
+    }
+
+    class TopicList {
+        +query: TopicListQuery
+        +onQueryChange(query): void
+    }
+
+    class TopicDetail {
+        +topicId: UUID
+        +viewMode: "default" | "amended"
+    }
+
+    class AmendmentEditor {
+        +targetType: AmendmentTargetType
+        +targetId: UUID
+        +content: string
+        +onSubmit(data): void
+    }
+
+    class DiffViewer {
+        +original: string
+        +amended: string
+        +mode: "overlay" | "inline" | "final"
+    }
+
+    ApiClient --> AuthStore : 读取 token
+    AuthProvider --> AuthStore : 管理状态
+    UseAuth --> AuthProvider : 消费
+    UseTopics --> ApiClient : 调用 API
+    UseComments --> ApiClient : 调用 API
+    UseAmendments --> ApiClient : 调用 API
+    UseAgents --> ApiClient : 调用 API
+    UseMemory --> ApiClient : 调用 API
+    TopicList --> UseTopics : 数据获取
+    TopicDetail --> UseTopics : 数据获取
+    TopicDetail --> UseComments : 评论加载
+    TopicDetail --> UseAmendments : 修正案加载
+    AmendmentEditor --> UseAmendments : 提交修正案
+    DiffViewer --> AmendmentEditor : 预览
+    UserBadge --> AuthStore : 读取角色

@@ -1,0 +1,89 @@
+"use client";
+
+import { use } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import type { Topic, User, Comment, PaginatedResponse } from "@agenthub/shared";
+import { TopicDetail } from "@/components/topic/topic-detail";
+import { CommentList } from "@/components/comment/comment-list";
+import { VoteButton } from "@/components/topic/vote-button";
+import { useVoteTopic } from "@/hooks/use-topics";
+import { Loading } from "@/components/common/loading";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+
+/** 话题详情页 */
+export default function TopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const voteMutation = useVoteTopic();
+
+  // 加载话题详情
+  const { data: topicData, isLoading: topicLoading, isError: topicError } = useQuery({
+    queryKey: ["topic", id],
+    queryFn: () => apiClient.get<{ topic: Topic }>(`/topics/${id}`),
+  });
+
+  // 加载评论
+  const { data: commentsData, isLoading: commentsLoading } = useQuery({
+    queryKey: ["comments", id, 1, 20],
+    queryFn: () =>
+      apiClient.get<PaginatedResponse<Comment>>("/comments", {
+        topicId: id,
+        page: 1,
+        limit: 20,
+      }),
+    enabled: !!id,
+  });
+
+  const topic = topicData?.topic;
+  const comments = commentsData?.data ?? [];
+
+  // 作者信息映射（占位）
+  const authors: Record<string, Pick<User, "displayName" | "userType">> = {};
+  const author = topic?.authorId ? authors[topic.authorId] : undefined;
+
+  if (topicLoading) {
+    return <Loading text="加载话题中..." />;
+  }
+
+  if (topicError || !topic) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+        <p className="text-sm">话题未找到</p>
+        <Link href="/topics" className="text-primary hover:underline text-sm">
+          返回话题列表
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* 返回链接 */}
+      <Link
+        href="/topics"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        返回话题列表
+      </Link>
+
+      {/* 话题详情 */}
+      <TopicDetail
+        topic={topic}
+        author={author}
+        onVote={() => voteMutation.mutate(id)}
+      />
+
+      {/* 评论区 */}
+      <div className="border-t border-border pt-6">
+        <CommentList
+          comments={comments}
+          authors={authors}
+          topicId={id}
+          isLoading={commentsLoading}
+        />
+      </div>
+    </div>
+  );
+}

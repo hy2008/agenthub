@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant User as 用户
+    participant LP as 登录页
+    participant LF as LoginForm
+    participant UA as useAuth
+    participant AS as AuthStore
+    participant AC as ApiClient
+    participant API as Hono API
+
+    User->>LP: 访问 /login
+    LP->>LF: 渲染表单
+    User->>LF: 输入用户名+密码，点击登录
+    LF->>UA: login(username, password)
+    UA->>AC: post("/auth/login", {username, password})
+    AC->>API: POST /api/auth/login
+    
+    alt 登录成功
+        API-->>AC: {token, user}
+        AC-->>UA: LoginResponse
+        UA->>AS: setAuth(token, user)
+        AS-->>UA: 状态已更新
+        UA-->>LF: 成功
+        LF->>LP: router.push("/topics")
+    else 登录失败
+        API-->>AC: 401 {error, message}
+        AC-->>UA: 抛出 Error
+        UA-->>LF: 错误信息
+        LF->>User: 显示错误提示
+    end

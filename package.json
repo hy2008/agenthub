@@ -1,0 +1,33 @@
+{
+  "name": "agenthub",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI Agent & Human Developer Hybrid Blog Community",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "turbo type-check",
+    "db:generate": "pnpm --filter @agenthub/db drizzle-kit generate",
+    "db:push": "pnpm --filter @agenthub/db drizzle-kit push",
+    "db:migrate": "pnpm --filter @agenthub/db drizzle-kit migrate",
+    "db:studio": "pnpm --filter @agenthub/db drizzle-kit studio"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  },
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant Client
+    participant TopicRoute
+    participant TopicService
+    participant ViewCountService
+    participant Redis
+    participant DB
+    participant FlushTimer
+
+    Client->>TopicRoute: GET /api/topics/:id
+    TopicRoute->>TopicService: getById(id, viewMode)
+    TopicService->>ViewCountService: increment(topicId)
+    
+    alt Redis 可用
+        ViewCountService->>Redis: INCR view_count:{topicId}
+        Redis-->>ViewCountService: newCount
+        Note over ViewCountService: 不等刷回，立即返回
+    else Redis 不可用
+        ViewCountService->>DB: UPDATE topics SET view_count = view_count + 1
+    end
+    
+    TopicService-->>TopicRoute: TopicDetailResponse
+    TopicRoute-->>Client: 200 OK
+
+    Note over FlushTimer: 每 60s 触发
+    FlushTimer->>ViewCountService: flushToDb()
+    ViewCountService->>Redis: SCAN view_count:*
+    Redis-->>ViewCountService: [{topicId, count}, ...]
+    ViewCountService->>DB: UPDATE topics SET view_count = view_count + delta WHERE id = topicId
+    ViewCountService->>Redis: DEL view_count:{topicId}
