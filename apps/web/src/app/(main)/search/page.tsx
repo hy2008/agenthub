@@ -1,12 +1,35 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSearch } from "@/hooks/use-search";
 import { SearchResults } from "@/components/search/search-results";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 
-/** 搜索结果页面 */
 export default function SearchPage() {
+  return (
+    <Suspense fallback={<Fallback />}>
+      <SearchPageContent />
+    </Suspense>
+  );
+}
+
+function Fallback() {
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="flex items-center gap-3 mb-6">
+        <Search className="h-6 w-6 text-primary" />
+        <h1 className="text-2xl font-bold text-foreground">搜索结果</h1>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-sm">加载中...</p>
+      </div>
+    </div>
+  );
+}
+
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 

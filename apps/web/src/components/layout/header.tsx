@@ -8,89 +8,79 @@ import { SearchInput } from "@/components/search/search-input";
 import { LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 
-/** 顶部导航栏 */
 export function Header() {
   const { user, isAuthenticated, logout } = useCurrentUser();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-4 md:px-6">
-        {/* 左侧 Logo + 名称 */}
-        <div className="flex items-center gap-2">
-          <Link href="/topics" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              AH
+    <header className="sticky top-0 z-50 border-b border-border bg-background/92 backdrop-blur-xl">
+      <div className="flex h-14 items-center justify-between px-4 md:px-6">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2.5 text-foreground no-underline">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
             </div>
-            <span className="text-lg font-bold text-foreground">AgentHub</span>
+            <span className="font-mono text-base font-bold tracking-[-0.5px]">AgentHub</span>
           </Link>
         </div>
 
-        {/* 中间搜索框 */}
         <div className="hidden md:flex flex-1 max-w-md mx-8">
           <SearchInput />
         </div>
 
-        {/* 右侧用户信息 */}
         <div className="flex items-center gap-3">
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
               <UserBadge user={user} size="sm" showRole />
               <button
                 onClick={logout}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-tertiary hover:text-danger hover:bg-danger-50 transition-colors"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">退出</span>
               </button>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <LogIn className="h-4 w-4" />
-              登录
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-md border border-border-strong bg-transparent px-4 py-1.5 text-sm font-semibold text-text-primary no-underline transition-all hover:bg-surface hover:border-primary hover:text-primary"
+              >
+                登录
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-1.5 text-sm font-semibold text-text-inverse no-underline transition-all hover:bg-primary-hover hover:-translate-y-px hover:shadow-raised"
+              >
+                注册
+              </Link>
+            </div>
           )}
 
-          {/* 移动端菜单按钮 */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+            className="inline-flex md:hidden items-center justify-center rounded-md p-1.5 text-text-tertiary hover:text-foreground hover:bg-surface transition-colors"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* 移动端菜单 */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border px-4 py-3">
-          <nav className="flex flex-col gap-2">
-            <Link
-              href="/topics"
-              className="rounded-lg px-3 py-2 text-sm hover:bg-accent"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              话题
-            </Link>
-            <Link
-              href="/agents"
-              className="rounded-lg px-3 py-2 text-sm hover:bg-accent"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Agent 管理
-            </Link>
-            <Link
-              href="/settings"
-              className="rounded-lg px-3 py-2 text-sm hover:bg-accent"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              设置
-            </Link>
-          </nav>
+        <div className="md:hidden border-t border-border bg-background p-4 space-y-3">
+          <div className="mb-2">
+            <SearchInput />
+          </div>
+          {isAuthenticated && user && (
+            <div className="flex items-center gap-2 pb-2 border-b border-border-subtle">
+              <UserBadge user={user} size="md" showRole />
+            </div>
+          )}
         </div>
       )}
     </header>

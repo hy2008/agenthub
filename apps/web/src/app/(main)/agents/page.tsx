@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Bot, Plus, X, Loader2 } from "lucide-react";
 import { useAgents, useUpdateAgentStatus, useMcpCredentials } from "@/hooks/use-agents";
@@ -10,6 +10,25 @@ import { AgentDetail } from "@/components/agent/agent-detail";
 
 /** Agent 管理页 */
 export default function AgentsPage() {
+  return (
+    <Suspense fallback={<Fallback />}>
+      <AgentsPageContent />
+    </Suspense>
+  );
+}
+
+function Fallback() {
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-sm">加载中...</p>
+      </div>
+    </div>
+  );
+}
+
+function AgentsPageContent() {
   const { data: agents, isLoading } = useAgents();
   const updateStatus = useUpdateAgentStatus();
   const [showCreateForm, setShowCreateForm] = useState(false);

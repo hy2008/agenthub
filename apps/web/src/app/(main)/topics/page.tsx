@@ -1,21 +1,50 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { Suspense, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTopics } from "@/hooks/use-topics";
 import { TopicList } from "@/components/topic/topic-list";
-import { TopicFilter } from "@/components/topic/topic-filter";
+import { SearchInput } from "@/components/search/search-input";
+import { Plus, Loader2 } from "lucide-react";
 import type { TopicType, User } from "@agenthub/shared";
+import { cn } from "@/lib/utils";
 
-/** 话题列表页 */
+const tabs = [
+  { key: "popular", label: "热门" },
+  { key: "newest", label: "最新" },
+  { key: "most_commented", label: "精华" },
+] as const;
+
 export default function TopicsPage() {
+  return (
+    <Suspense fallback={<Fallback />}>
+      <TopicsPageContent />
+    </Suspense>
+  );
+}
+
+function Fallback() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-foreground tracking-[-0.5px]">话题广场</h1>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-sm">加载中...</p>
+      </div>
+    </div>
+  );
+}
+
+function TopicsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 从 URL searchParams 读取状态
   const page = Number(searchParams.get("page")) || 1;
   const type = (searchParams.get("type") as TopicType) || undefined;
-  const sort = (searchParams.get("sort") as "newest" | "popular" | "most_commented") || "newest";
+  const sort =
+    (searchParams.get("sort") as "newest" | "popular" | "most_commented") || "newest";
 
   const { data, isLoading, isError } = useTopics({
     page,
@@ -24,7 +53,6 @@ export default function TopicsPage() {
     sort,
   });
 
-  // 更新 URL searchParams
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -35,8 +63,7 @@ export default function TopicsPage() {
           params.set(key, value);
         }
       });
-      // 切换筛选时重置页码
-      if (updates.type !== undefined || updates.sort !== undefined) {
+      if (updates.sort !== undefined) {
         params.delete("page");
       }
       router.push(`/topics?${params.toString()}`);
@@ -44,21 +71,42 @@ export default function TopicsPage() {
     [router, searchParams]
   );
 
-  // 作者信息映射（占位 — 后续需要批量查询用户接口）
   const authors: Record<string, Pick<User, "displayName" | "userType">> = {};
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">话题</h1>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-foreground tracking-[-0.5px]">话题广场</h1>
+          <button className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-primary-hover hover:-translate-y-px transition-all hover:shadow-raised">
+            <Plus className="h-4 w-4" />
+            发布话题
+          </button>
+        </div>
 
-      <TopicFilter
-        type={type}
-        sort={sort}
-        onTypeChange={(t) => updateParams({ type: t })}
-        onSortChange={(s) => updateParams({ sort: s })}
-      />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1 rounded-lg bg-surface p-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => updateParams({ sort: tab.key })}
+                className={cn(
+                  "rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+                  sort === tab.key
+                    ? "bg-background text-foreground shadow-subtle"
+                    : "text-text-tertiary hover:text-text-secondary"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden sm:block w-64">
+            <SearchInput />
+          </div>
+        </div>
+      </div>
 
       <TopicList
         topics={data?.data ?? []}
@@ -67,7 +115,7 @@ export default function TopicsPage() {
         totalPages={data?.totalPages ?? 1}
         isLoading={isLoading}
         isError={isError}
-        onPageChange={(p) => updateParams({ page: p > 1 ? String(p) : undefined })}
+        onPageChange={(p) => updateParams({ page: String(p) })}
       />
     </div>
   );
