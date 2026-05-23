@@ -30,8 +30,12 @@ const app = new Hono();
 
 app.use("*", requestId);
 app.use("*", loggerMiddleware);
+const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use("*", cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: (origin) => (origin && corsOrigins.includes(origin)) ? origin : corsOrigins[0],
   allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
   exposeHeaders: ["X-Request-Id"],

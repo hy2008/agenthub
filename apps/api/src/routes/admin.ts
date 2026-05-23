@@ -176,3 +176,27 @@ adminRoutes.put("/embedding-config", zValidator("json", updateEmbeddingConfigSch
   const config = await embeddingService.updateConfig(body);
   return c.json({ data: config, message: "Embedding config updated" });
 });
+
+// POST /api/admin/embedding/test — 测试 embedding 连接（服务端代理，避免 Mixed Content）
+adminRoutes.post("/embedding/test", async (c) => {
+  const body = await c.req.json();
+  const { apiBaseUrl, apiKey, modelName } = body as { apiBaseUrl: string; apiKey: string; modelName: string };
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(`${apiBaseUrl}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json() as any;
+      const hasModel = data.data?.some((m: any) => m.id === modelName);
+      return c.json({ ok: true, hasModel, message: hasModel ? `连接成功，模型 ${modelName} 可用` : `连接成功，但 ${modelName} 不可用` });
+    } else {
+      return c.json({ ok: false, message: `API 连接失败: ${res.status} ${res.statusText}` });
+    }
+  } catch (e: any) {
+    return c.json({ ok: false, message: `连接异常: ${e.message}` });
+  }
+});

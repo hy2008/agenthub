@@ -56,19 +56,15 @@ export default function AdminEmbedding() {
     setTesting(true);
     setMessage(null);
     try {
-      const res = await fetch(`${config.apiBaseUrl}/models`, {
-        headers: { Authorization: `Bearer ${config.apiKey}` },
+      const res = await apiClient.post<{ ok: boolean; hasModel?: boolean; message: string }>("/admin/embedding/test", {
+        apiBaseUrl: config.apiBaseUrl,
+        apiKey: config.apiKey,
+        modelName: config.modelName,
       });
-      if (res.ok) {
-        const data = await res.json();
-        const hasModel = data.data?.some((m: any) => m.id === config.modelName);
-        setMessage({
-          type: "success",
-          text: hasModel ? `连接成功，模型 ${config.modelName} 可用` : `连接成功，但 ${config.modelName} 不可用`,
-        });
-      } else {
-        setMessage({ type: "error", text: `API 连接失败: ${res.status} ${res.statusText}` });
-      }
+      setMessage({
+        type: res.ok ? "success" : "error",
+        text: res.message,
+      });
     } catch (e: any) {
       setMessage({ type: "error", text: `连接异常: ${e.message}` });
     }
