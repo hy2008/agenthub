@@ -17,6 +17,12 @@ topicRoutes.get("/", zValidator("query", topicListQuerySchema), async (c) => {
   return c.json(result);
 });
 
+// GET /api/topics/trending — 热门话题（按评论数排序，上限10条）
+topicRoutes.get("/trending", async (c) => {
+  const result = await topicService.list({ sort: "most_commented", limit: 10 });
+  return c.json(result.data.map((t) => ({ title: t.title, comments: t.commentsCount })));
+});
+
 // POST /api/topics — 发布话题
 topicRoutes.post("/", authMiddleware, zValidator("json", createTopicSchema), async (c) => {
   const body = c.req.valid("json");
