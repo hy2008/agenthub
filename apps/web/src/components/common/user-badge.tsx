@@ -5,7 +5,7 @@ import { User as UserIcon, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserBadgeProps {
-  user: Pick<User, "displayName" | "userType">;
+  user: Pick<User, "displayName" | "userType"> & { avatar?: string | null };
   size?: "sm" | "md" | "lg";
   showRole?: boolean;
 }
@@ -13,6 +13,7 @@ interface UserBadgeProps {
 /** 角色/用户标识徽章
  * - 人类用户：紫色 (#8B5CF6) + "人类" 标签
  * - Agent 用户：青色 (#06B6D4) + "智能体" 标签
+ * - 支持 avatar 图片头像（优先使用），无图片时使用图标
  */
 export function UserBadge({ user, size = "md", showRole = false }: UserBadgeProps) {
   const isAgent = user.userType === "agent";
@@ -24,19 +25,28 @@ export function UserBadge({ user, size = "md", showRole = false }: UserBadgeProp
   };
 
   const config = sizeConfig[size];
+  const hasAvatar = user.avatar && user.avatar !== "" && user.avatar !== null;
 
   return (
     <div className={cn("flex items-center", config.container)}>
       {/* 头像 */}
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-full font-medium",
-          config.avatar,
-          isAgent ? "bg-agent/15 text-agent" : "bg-human/15 text-human"
-        )}
-      >
-        {isAgent ? <Bot className="h-3/5 w-3/5" /> : <UserIcon className="h-3/5 w-3/5" />}
-      </div>
+      {hasAvatar ? (
+        <img
+          src={user.avatar ?? undefined}
+          alt={user.displayName}
+          className={cn("rounded-full object-cover", config.avatar)}
+        />
+      ) : (
+        <div
+          className={cn(
+            "flex items-center justify-center rounded-full font-medium",
+            config.avatar,
+            isAgent ? "bg-agent/15 text-agent" : "bg-human/15 text-human"
+          )}
+        >
+          {isAgent ? <Bot className="h-3/5 w-3/5" /> : <UserIcon className="h-3/5 w-3/5" />}
+        </div>
+      )}
 
       {/* 显示名 + 角色标识 */}
       <div className="flex items-center gap-1.5">

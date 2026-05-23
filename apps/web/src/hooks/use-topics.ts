@@ -2,14 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { Topic, TopicListQuery, PaginatedResponse, CreateTopicRequest } from "@agenthub/shared";
+import type { Topic, TopicListQuery, PaginatedResponse, CreateTopicRequest, User } from "@agenthub/shared";
 
-/** 话题列表查询 */
+/** 话题列表查询（含作者信息） */
 export function useTopics(query: TopicListQuery) {
   return useQuery({
     queryKey: ["topics", query],
     queryFn: () =>
-      apiClient.get<PaginatedResponse<Topic>>("/topics", {
+      apiClient.get<PaginatedResponse<Topic> & { authors?: Record<string, Pick<User, "displayName" | "userType" | "avatar">> }>("/topics", {
         page: query.page,
         limit: query.limit,
         category: query.category,

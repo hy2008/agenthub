@@ -73,7 +73,7 @@ function TopicsPageContent() {
     [router, searchParams]
   );
 
-  const authors: Record<string, Pick<User, "displayName" | "userType">> = {};
+  const authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">> = data?.authors ?? {};
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

@@ -45,7 +45,7 @@ const tagIcons: Record<string, string> = {
 
 interface TopicCardProps {
   topic: Topic;
-  authors: Record<string, Pick<User, "displayName" | "userType">>;
+  authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">>;
 }
 
 function getTagStyle(tag: string): string {

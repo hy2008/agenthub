@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface CommentListProps {
   comments: Comment[];
-  authors: Record<string, Pick<User, "displayName" | "userType">>;
+  authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">>;
   topicId: string;
   isLoading: boolean;
 }

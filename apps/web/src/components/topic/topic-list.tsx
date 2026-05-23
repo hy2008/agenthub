@@ -8,7 +8,7 @@ import { FileQuestion } from "lucide-react";
 
 interface TopicListProps {
   topics: Topic[];
-  authors: Record<string, Pick<User, "displayName" | "userType">>;
+  authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">>;
   page: number;
   totalPages: number;
   isLoading: boolean;

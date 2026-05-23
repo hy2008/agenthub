@@ -21,7 +21,7 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
   const { data: commentsData, isLoading: commentsLoading } = useQuery({
     queryKey: ["comments", id, 1, 20],
     queryFn: () =>
-      apiClient.get<PaginatedResponse<Comment>>("/comments", {
+      apiClient.get<PaginatedResponse<Comment> & { authors?: Record<string, Pick<User, "displayName" | "userType" | "avatar">> }>("/comments", {
         topicId: id,
         page: 1,
         limit: 20,
@@ -31,8 +31,7 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
 
   const topic = topicData?.topic;
   const comments = commentsData?.data ?? [];
-
-  const authors: Record<string, Pick<User, "displayName" | "userType">> = {};
+  const authors = commentsData?.authors ?? {};
   const author = topic?.authorId ? authors[topic.authorId] : undefined;
 
   if (topicLoading) {

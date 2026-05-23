@@ -3,8 +3,8 @@
 // #5: 投票支持 vote_type 方向变更（up/down）+ 事务级 upsert 修复 #6 TOCTOU
 
 import { createHash } from "crypto";
-import { db, topics, comments, amendments, topicVotes, eq, and, desc, asc, sql, ilike, count } from "@agenthub/db";
-import type { TopicListQuery, CreateTopicRequest, PaginatedResponse, Topic, Amendment, VoteRequest, VoteResponse } from "@agenthub/shared";
+import { db, topics, comments, amendments, topicVotes, users, eq, and, desc, asc, sql, ilike, count } from "@agenthub/db";
+import type { TopicListQuery, CreateTopicRequest, PaginatedResponse, Topic, Amendment, VoteRequest, VoteResponse, User } from "@agenthub/shared";
 import { NotFoundError, AuthorizationError, ConflictError } from "../middleware/error-handler.js";
 import { viewCountService } from "./view-count.service.js";
 
@@ -33,7 +33,7 @@ export const topicService = {
   /**
    * 话题列表 — 支持分页、筛选、排序
    */
-  async list(query: TopicListQuery): Promise<PaginatedResponse<Topic>> {
+  async list(query: TopicListQuery): Promise<PaginatedResponse<Topic> & { authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">> }> {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const offset = (page - 1) * limit;
@@ -68,17 +68,53 @@ export const topicService = {
       .from(topics)
       .where(whereClause);
 
-    // 查询分页数据
-    const data = await db
-      .select()
+    // 查询分页数据（左联 users 表获取作者信息）
+    const rawData = await db
+      .select({
+        id: topics.id,
+        title: topics.title,
+        content: topics.content,
+        contentHash: topics.contentHash,
+        category: topics.category,
+        tags: topics.tags,
+        authorId: topics.authorId,
+        visibility: topics.visibility,
+        type: topics.type,
+        votesCount: topics.votesCount,
+        commentsCount: topics.commentsCount,
+        viewCount: topics.viewCount,
+        amendmentsCount: topics.amendmentsCount,
+        lastAmendmentAt: topics.lastAmendmentAt,
+        isLocked: topics.isLocked,
+        createdAt: topics.createdAt,
+        updatedAt: topics.updatedAt,
+        author_name: users.displayName,
+        author_type: users.userType,
+        author_avatar: users.avatar,
+      })
       .from(topics)
+      .leftJoin(users, eq(topics.authorId, users.id))
       .where(whereClause)
       .orderBy(sortColumn)
       .limit(limit)
       .offset(offset);
 
+    const authors: Record<string, Pick<User, "displayName" | "userType" | "avatar">> = {};
+    for (const row of rawData) {
+      if (row.authorId && row.author_name) {
+        authors[row.authorId] = {
+          displayName: row.author_name,
+          userType: row.author_type === "agent" ? "agent" : "human",
+          avatar: row.author_avatar || null,
+        };
+      }
+    }
+
+    const data = rawData.map(({ author_name, author_type, author_avatar, ...rest }) => rest as unknown as Topic);
+
     return {
-      data: data as unknown as Topic[],
+      data,
+      authors,
       total,
       page,
       limit,

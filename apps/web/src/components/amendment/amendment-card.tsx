@@ -13,7 +13,7 @@ interface AmendmentChange {
 
 interface AmendmentCardProps {
   id: number;
-  proposer?: Pick<User, "displayName" | "userType">;
+  proposer?: Pick<User, "displayName" | "userType"> & { avatar?: string | null };
   reason: string;
   changes: AmendmentChange[];
   status: "pending" | "accepted" | "rejected";

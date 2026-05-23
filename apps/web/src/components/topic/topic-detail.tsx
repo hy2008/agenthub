@@ -4,14 +4,13 @@ import type { Topic, User } from "@agenthub/shared";
 import { UserBadge } from "@/components/common/user-badge";
 import { VoteButton } from "./vote-button";
 import { AmendmentBanner } from "@/components/amendment/amendment-banner";
-import { DiffView } from "@/components/amendment/diff-view";
-import { MemoryPromoteBanner } from "@/components/amendment/memory-promote-banner";
 import { AmendmentEditor } from "@/components/amendment/amendment-editor";
 import { AmendmentCard } from "@/components/amendment/amendment-card";
-import { Tag, Eye, MessageSquare, FileEdit, Clock } from "lucide-react";
+import { Tag, Eye, MessageSquare, FileEdit, Clock, Loader2 } from "lucide-react";
 import { formatRelativeTime } from "@/types";
 import { useVoteTopic } from "@/hooks/use-topics";
-import { useState, useMemo } from "react";
+import { useAmendments, useCreateAmendment } from "@/hooks/use-amendments";
+import { useState } from "react";
 
 interface TopicDetailProps {
   topic: Topic;
@@ -21,46 +20,9 @@ interface TopicDetailProps {
 export function TopicDetail({ topic, author }: TopicDetailProps) {
   const [showAmendmentEditor, setShowAmendmentEditor] = useState(false);
   const voteMutation = useVoteTopic();
-
-  const demoAmendments = useMemo(() => [
-    {
-      id: 1,
-      proposer: {
-        displayName: "CodeReviewBot",
-        userType: "agent" as const,
-      },
-      reason: "增加 AbortSignal 超时处理和指数退避重试策略",
-      changes: [
-        {
-          type: "add" as const,
-          content:
-            "应增加 transport 层的 AbortSignal.timeout(10000) 超时处理逻辑，防止 MCP 工具调用因网络问题长时间挂起。",
-        },
-        {
-          type: "modify" as const,
-          original: "重试次数固定为 3 次，采用固定间隔退避。",
-          content:
-            "重试次数改为 5 次，退避策略改为指数级退避（1s → 2s → 4s → 8s → 16s），提升弱网环境下的容错能力。",
-        },
-      ],
-      status: "pending" as const,
-      paragraphIndex: 1,
-    },
-  ], []);
-
-  const amendedContent = useMemo(() => {
-    let result = topic.content;
-    for (const amendment of demoAmendments) {
-      for (const change of amendment.changes) {
-        if (change.type === "add") {
-          result += "\n\n[修正案新增] " + change.content;
-        } else if (change.type === "modify") {
-          result = result.replace(change.original, change.content);
-        }
-      }
-    }
-    return result;
-  }, [topic.content, demoAmendments]);
+  const { data: amendmentsData, isLoading: amendmentsLoading } = useAmendments(topic.id);
+  const createAmendment = useCreateAmendment(topic.id);
+  const amendments = amendmentsData?.data ?? [];
 
   return (
     <article className="rounded-xl border border-border bg-background overflow-hidden">
@@ -132,33 +94,26 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
             </div>
 
             <div className="space-y-4">
-              <DiffView
-                originalContent={topic.content}
-                amendedContent={amendedContent}
-              />
-
-              {demoAmendments.map((amendment) => (
-                <AmendmentCard
-                  key={amendment.id}
-                  id={amendment.id}
-                  proposer={amendment.proposer}
-                  reason={amendment.reason}
-                  changes={amendment.changes}
-                  status={amendment.status}
-                  paragraphIndex={amendment.paragraphIndex}
-                  onAccept={() => {}}
-                  onReject={() => {}}
-                  onRevise={() => {}}
-                />
-              ))}
-
-              {demoAmendments.map((amendment) => (
-                <MemoryPromoteBanner
-                  key={`promote-${amendment.id}`}
-                  amendmentId={amendment.id}
-                  onPromote={() => {}}
-                />
-              ))}
+              {amendmentsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-text-tertiary">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">加载修正案中...</span>
+                </div>
+              ) : amendments.length > 0 ? (
+                amendments.map((amendment) => (
+                  <AmendmentCard
+                    key={Number(amendment.id)}
+                    id={Number(amendment.id)}
+                    reason={amendment.reason || ""}
+                    changes={[{ type: "add" as const, content: amendment.content }]}
+                    status={amendment.isRevoked ? "rejected" : "pending"}
+                    paragraphIndex={amendment.paragraphIndex || 0}
+                    onAccept={() => {}}
+                    onReject={() => {}}
+                    onRevise={() => {}}
+                  />
+                ))
+              ) : null}
 
               {!showAmendmentEditor ? (
                 <button
@@ -170,8 +125,18 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
               ) : (
                 <AmendmentEditor
                   topicId={topic.id}
-                  onSubmit={() => setShowAmendmentEditor(false)}
+                  onSubmit={(content) => {
+                    createAmendment.mutate(
+                      { content, scope: "append", paragraphIndex: 0 },
+                      { onSuccess: () => setShowAmendmentEditor(false) }
+                    );
+                  }}
                 />
+              )}
+              {createAmendment.error && (
+                <p className="text-xs text-red-500">
+                  {(createAmendment.error as Error).message || "提交失败"}
+                </p>
               )}
             </div>
           </div>
