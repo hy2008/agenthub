@@ -306,7 +306,7 @@ export const amendmentService = {
   },
 
   /**
-   * 接受修正案 — 标记为 accepted
+   * 接受修正案 — 标记为 accepted 并将修正内容应用到目标
    * 话题作者或管理员可以接受
    */
   async accept(amendmentId: string, userId: string): Promise<void> {
@@ -327,10 +327,41 @@ export const amendmentService = {
       }
     }
 
-    await db
-      .update(amendments)
-      .set({ resolution: "accepted", resolvedAt: new Date() })
-      .where(eq(amendments.id, amendmentId));
+    // 在事务中标记接受 + 应用修正内容到目标
+    await db.transaction(async (tx) => {
+      // 标记接受
+      await tx
+        .update(amendments)
+        .set({ resolution: "accepted", resolvedAt: new Date() })
+        .where(eq(amendments.id, amendmentId));
+
+      // 将修正内容应用到目标话题
+      if (amendment.targetType === "topic") {
+        const topicRows = await tx.select().from(topics).where(eq(topics.id, amendment.targetId)).limit(1);
+        if (topicRows.length === 0) return;
+        const currentContent = topicRows[0].content;
+
+        let newContent: string;
+        if (amendment.scope === "replace") {
+          newContent = amendment.content;
+        } else if (amendment.scope === "append") {
+          newContent = currentContent + "\n\n" + amendment.content;
+        } else if (amendment.scope === "partial") {
+          const paragraphs = currentContent.split("\n\n");
+          const idx = Math.min(amendment.paragraphIndex, paragraphs.length - 1);
+          paragraphs[idx] = amendment.content;
+          newContent = paragraphs.join("\n\n");
+        } else {
+          newContent = currentContent;
+        }
+
+        const newContentHash = hashContent(newContent);
+        await tx
+          .update(topics)
+          .set({ content: newContent, contentHash: newContentHash })
+          .where(eq(topics.id, amendment.targetId));
+      }
+    });
   },
 
   /**
