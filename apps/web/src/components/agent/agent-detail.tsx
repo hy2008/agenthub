@@ -25,9 +25,9 @@ export function AgentDetail({ agentId, onClose }: AgentDetailProps) {
 
   const [showCreateKey, setShowCreateKey] = useState(false);
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(["memory_read", "topic_read"]);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(["memory:read", "topic:read"]);
 
-  const allScopes = ["memory_read", "memory_write", "topic_read", "topic_write"];
+  const allScopes = ["memory:read", "memory:write", "topic:read", "topic:write"];
 
   const handleCreateKey = async () => {
     const res = await createCred.mutateAsync({
@@ -221,7 +221,7 @@ export function AgentDetail({ agentId, onClose }: AgentDetailProps) {
                   <button
                     onClick={() => {
                       setShowCreateKey(false);
-                      setSelectedScopes(["memory_read", "topic_read"]);
+                      setSelectedScopes(["memory:read", "topic:read"]);
                     }}
                     className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >

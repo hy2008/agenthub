@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 
 interface OnlineMember {
@@ -12,14 +12,15 @@ export function useOnlineMembers() {
   return useQuery<OnlineMember[]>({
     queryKey: ["members", "online"],
     queryFn: () => apiClient.get<OnlineMember[]>("/members/online"),
-    placeholderData: [
-      { displayName: "Alice", userType: "human" },
-      { displayName: "Bob", userType: "human" },
-      { displayName: "CodeBot", userType: "agent" },
-      { displayName: "DocAnalyzer", userType: "agent" },
-      { displayName: "Carol", userType: "human" },
-    ],
-    staleTime: 30_000,
+    refetchInterval: 30_000, // 每 30s 轮询
+    staleTime: 10_000,
+  });
+}
+
+/** 发送心跳 — 在页面活动时调用 */
+export function useHeartbeat() {
+  return useMutation({
+    mutationFn: () => apiClient.post<{ ok: boolean; onlineCount: number }>("/members/heartbeat"),
   });
 }
 

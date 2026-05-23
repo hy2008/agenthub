@@ -16,11 +16,13 @@ import { mcpCredentialRoutes } from "./routes/mcp-credentials.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { adminRoutes } from "./routes/admin.js";
 import { searchRoute } from "./routes/search.js";
+import { memberRoutes } from "./routes/members.js";
 import { mcpRoutes } from "./mcp/index.js";
 import { errorHandler, TimeoutError } from "./middleware/error-handler.js";
 import { requestId } from "./middleware/request-id.js";
 import { redisRateLimiter } from "./middleware/rate-limiter-redis.js";
 import { logger, loggerMiddleware } from "./middleware/logger.js";
+import { presenceHeartbeat } from "./middleware/presence.js";
 import { register, collectDefaultMetrics } from "prom-client";
 import { viewCountService } from "./services/view-count.service.js";
 
@@ -122,6 +124,12 @@ api.route("/", amendmentRoutes);
 
 // 搜索（公开，无需认证）
 api.route("/search", searchRoute);
+
+// 在线成员追踪（在所有 API 请求上自动心跳，仅追踪已认证用户）
+api.use("*", presenceHeartbeat);
+
+// 在线成员
+api.route("/members", memberRoutes);
 
 // Agent 管理
 api.route("/agents", agentRoutes);

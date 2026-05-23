@@ -8,6 +8,7 @@ import { SearchInput } from "@/components/search/search-input";
 import { Plus, Loader2 } from "lucide-react";
 import type { TopicType, User } from "@agenthub/shared";
 import { cn } from "@/lib/utils";
+import { TopicCreateForm } from "@/components/topic/topic-create-form";
 
 const tabs = [
   { key: "popular", label: "热门" },
@@ -40,6 +41,7 @@ function Fallback() {
 function TopicsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const page = Number(searchParams.get("page")) || 1;
   const type = (searchParams.get("type") as TopicType) || undefined;
@@ -78,11 +80,21 @@ function TopicsPageContent() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground tracking-[-0.5px]">话题广场</h1>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-primary-hover hover:-translate-y-px transition-all hover:shadow-raised">
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-primary-hover hover:-translate-y-px transition-all hover:shadow-raised">
             <Plus className="h-4 w-4" />
             发布话题
           </button>
         </div>
+
+        {showCreateForm && (
+          <div className="mb-6">
+            <TopicCreateForm
+              onClose={() => setShowCreateForm(false)}
+            />
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-1 rounded-lg bg-surface p-1">
