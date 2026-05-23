@@ -98,6 +98,8 @@ export interface Amendment {
   contentHash: string;
   isRevoked: boolean;
   revokedAt: ISODateString | null;
+  resolution: "accepted" | "rejected" | null;
+  resolvedAt: ISODateString | null;
   createdAt: ISODateString;
   revokeDeadline: ISODateString;
 }

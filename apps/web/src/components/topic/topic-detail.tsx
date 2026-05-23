@@ -1,6 +1,6 @@
 "use client";
 
-import type { Topic, User } from "@agenthub/shared";
+import type { Topic, User, Amendment } from "@agenthub/shared";
 import { UserBadge } from "@/components/common/user-badge";
 import { VoteButton } from "./vote-button";
 import { AmendmentBanner } from "@/components/amendment/amendment-banner";
@@ -9,12 +9,12 @@ import { AmendmentCard } from "@/components/amendment/amendment-card";
 import { Tag, Eye, MessageSquare, FileEdit, Clock, Loader2 } from "lucide-react";
 import { formatRelativeTime } from "@/types";
 import { useVoteTopic } from "@/hooks/use-topics";
-import { useAmendments, useCreateAmendment } from "@/hooks/use-amendments";
+import { useAmendments, useCreateAmendment, useAcceptAmendment, useRejectAmendment, useRevokeAmendment } from "@/hooks/use-amendments";
 import { useState } from "react";
 
 interface TopicDetailProps {
   topic: Topic;
-  author?: Pick<User, "displayName" | "userType">;
+  author?: Pick<User, "displayName" | "userType" | "avatar">;
 }
 
 export function TopicDetail({ topic, author }: TopicDetailProps) {
@@ -22,7 +22,18 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
   const voteMutation = useVoteTopic();
   const { data: amendmentsData, isLoading: amendmentsLoading } = useAmendments(topic.id);
   const createAmendment = useCreateAmendment(topic.id);
+  const acceptAmendment = useAcceptAmendment(topic.id);
+  const rejectAmendment = useRejectAmendment(topic.id);
+  const revokeAmendment = useRevokeAmendment(topic.id);
   const amendments = amendmentsData?.data ?? [];
+
+  /** 从 amendment 数据推导显示状态 */
+  const getDisplayStatus = (amendment: Amendment): "pending" | "accepted" | "rejected" => {
+    if (amendment.isRevoked) return "rejected";
+    if (amendment.resolution === "accepted") return "accepted";
+    if (amendment.resolution === "rejected") return "rejected";
+    return "pending";
+  };
 
   return (
     <article className="rounded-xl border border-border bg-background overflow-hidden">
@@ -106,10 +117,10 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
                     id={Number(amendment.id)}
                     reason={amendment.reason || ""}
                     changes={[{ type: "add" as const, content: amendment.content }]}
-                    status={amendment.isRevoked ? "rejected" : "pending"}
+                    status={getDisplayStatus(amendment)}
                     paragraphIndex={amendment.paragraphIndex || 0}
-                    onAccept={() => {}}
-                    onReject={() => {}}
+                    onAccept={() => acceptAmendment.mutate(amendment.id)}
+                    onReject={() => rejectAmendment.mutate(amendment.id)}
                     onRevise={() => {}}
                   />
                 ))

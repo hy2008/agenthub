@@ -42,6 +42,8 @@ export const amendments = pgTable("amendments", {
   contentHash: varchar("content_hash", { length: 64 }).notNull(),
   isRevoked: boolean("is_revoked").notNull().default(false),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  resolution: varchar("resolution", { length: 16 }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
   revokeDeadline: timestamp("revoke_deadline", { withTimezone: true }).notNull(),
 }, (table) => [

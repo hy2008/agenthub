@@ -27,3 +27,39 @@ export function useCreateAmendment(topicId: string) {
     },
   });
 }
+
+/** 接受修正案 */
+export function useAcceptAmendment(topicId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (amendmentId: string) =>
+      apiClient.post(`/amendments/${amendmentId}/accept`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["amendments", topicId] });
+    },
+  });
+}
+
+/** 拒绝/撤回修正案 */
+export function useRejectAmendment(topicId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (amendmentId: string) =>
+      apiClient.post(`/amendments/${amendmentId}/reject`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["amendments", topicId] });
+    },
+  });
+}
+
+/** 撤回修正案（仅作者3分钟内） */
+export function useRevokeAmendment(topicId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (amendmentId: string) =>
+      apiClient.post(`/amendments/${amendmentId}/revoke`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["amendments", topicId] });
+    },
+  });
+}

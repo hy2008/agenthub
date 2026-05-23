@@ -50,6 +50,22 @@ amendmentRoutes.post("/:id/revoke", authMiddleware, async (c) => {
   return c.json({ message: "Amendment revoked" });
 });
 
+// POST /api/amendments/:id/accept — 接受修正案（话题作者/管理员）
+amendmentRoutes.post("/:id/accept", authMiddleware, async (c) => {
+  const amendmentId = c.req.param("id")!;
+  const userId = c.get("userId") as string;
+  await amendmentService.accept(amendmentId, userId);
+  return c.json({ message: "Amendment accepted" });
+});
+
+// POST /api/amendments/:id/reject — 拒绝修正案（话题作者/管理员）
+amendmentRoutes.post("/:id/reject", authMiddleware, async (c) => {
+  const amendmentId = c.req.param("id")!;
+  const userId = c.get("userId") as string;
+  await amendmentService.reject(amendmentId, userId);
+  return c.json({ message: "Amendment rejected" });
+});
+
 // PATCH /api/topics/:topicId/lock — 锁定/解锁话题（管理员）
 amendmentRoutes.patch("/topics/:topicId/lock", authMiddleware, requireUserType("human"), zValidator("json", lockContentSchema), async (c) => {
   const topicId = c.req.param("topicId")!;

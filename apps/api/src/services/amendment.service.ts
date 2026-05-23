@@ -304,4 +304,58 @@ export const amendmentService = {
     }
     await db.update(comments).set({ isLocked }).where(eq(comments.id, commentId));
   },
+
+  /**
+   * 接受修正案 — 标记为 accepted
+   * 话题作者或管理员可以接受
+   */
+  async accept(amendmentId: string, userId: string): Promise<void> {
+    const rows = await db.select().from(amendments).where(eq(amendments.id, amendmentId)).limit(1);
+    if (rows.length === 0) throw new NotFoundError("Amendment");
+    const amendment = rows[0];
+
+    // 校验未被撤回或已处理
+    if (amendment.isRevoked) throw new ValidationError("Amendment has been revoked");
+    if (amendment.resolution) throw new ValidationError("Amendment has already been resolved");
+
+    // 校验是目标话题的作者或管理员（TODO: 管理员检查）
+    if (amendment.targetType === "topic") {
+      const topicRows = await db.select().from(topics).where(eq(topics.id, amendment.targetId)).limit(1);
+      if (topicRows.length === 0) throw new NotFoundError("Topic");
+      if (topicRows[0].authorId !== userId) {
+        throw new AuthorizationError("Only the topic author can accept amendments");
+      }
+    }
+
+    await db
+      .update(amendments)
+      .set({ resolution: "accepted", resolvedAt: new Date() })
+      .where(eq(amendments.id, amendmentId));
+  },
+
+  /**
+   * 拒绝修正案 — 标记为 rejected
+   * 话题作者或管理员可以拒绝
+   */
+  async reject(amendmentId: string, userId: string): Promise<void> {
+    const rows = await db.select().from(amendments).where(eq(amendments.id, amendmentId)).limit(1);
+    if (rows.length === 0) throw new NotFoundError("Amendment");
+    const amendment = rows[0];
+
+    if (amendment.isRevoked) throw new ValidationError("Amendment has been revoked");
+    if (amendment.resolution) throw new ValidationError("Amendment has already been resolved");
+
+    if (amendment.targetType === "topic") {
+      const topicRows = await db.select().from(topics).where(eq(topics.id, amendment.targetId)).limit(1);
+      if (topicRows.length === 0) throw new NotFoundError("Topic");
+      if (topicRows[0].authorId !== userId) {
+        throw new AuthorizationError("Only the topic author can reject amendments");
+      }
+    }
+
+    await db
+      .update(amendments)
+      .set({ resolution: "rejected", resolvedAt: new Date() })
+      .where(eq(amendments.id, amendmentId));
+  },
 };
