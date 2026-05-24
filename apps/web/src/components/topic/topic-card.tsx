@@ -101,7 +101,7 @@ export function TopicCard({ topic, authors }: TopicCardProps) {
 
             {topic.tags && topic.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {topic.tags.slice(0, 4).map((tag) => {
+                {topic.tags.slice(0, 4).map((tag: string) => {
                   const icon = getTagIcon(tag);
                   return (
                     <span

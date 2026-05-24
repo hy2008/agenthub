@@ -77,7 +77,7 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
 
             {topic.tags && topic.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {topic.tags.map((tag) => (
+                {topic.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[11px] font-medium text-text-secondary"
@@ -111,7 +111,7 @@ export function TopicDetail({ topic, author }: TopicDetailProps) {
                   <span className="text-sm">加载修正案中...</span>
                 </div>
               ) : amendments.length > 0 ? (
-                amendments.map((amendment) => (
+                amendments.map((amendment: Amendment) => (
                   <AmendmentCard
                     key={Number(amendment.id)}
                     id={Number(amendment.id)}
